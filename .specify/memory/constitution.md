@@ -1,12 +1,15 @@
 <!--
 Sync Impact Report:
-- Version change: 1.0.0 → 1.1.0
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: なし
 - Added principles:
-  - I. 日本語ドキュメンテーション (Japanese Documentation)
-  - II. シンプルさ優先 (Simplicity First)
-  - III. 明確なコミュニケーション (Clear Communication)
-  - IV. ブランチ運用ポリシー (Branch Management Policy) [NEW]
-- Templates requiring updates: ✅ Reviewed (no updates needed for initial constitution)
+  - V. テスト駆動開発 (Test-Driven Development / TDD)
+- Removed principles: なし
+- Templates requiring updates:
+  - ✅ plan-template.md - Constitution Check セクションが TDD 原則を参照可能
+  - ✅ spec-template.md - User Scenarios & Testing セクションが TDD と整合
+  - ✅ tasks-template.md - 既に「Tests MUST be written and FAIL before implementation」を含む
+- Follow-up TODOs: なし
 -->
 
 # Joseki Lab Constitution
@@ -54,6 +57,24 @@ GitHub Actions上のClaude Codeセッションでは、一貫したブランチ�
   - 実装完了後、PRを通じてメインブランチにマージ
   - マージ完了後、featureブランチを削除
 
+### V. テスト駆動開発（TDD）
+
+実装の前にテストコードを書くことを必須とする。
+
+- **テストファースト**: 機能を実装する前に、その機能のテストを先に書くこと
+- **Red-Green-Refactor サイクル**:
+  1. **Red**: まず失敗するテストを書く
+  2. **Green**: テストを通過する最小限のコードを実装する
+  3. **Refactor**: コードをリファクタリングして品質を向上させる
+- **テストの粒度**:
+  - ユニットテスト: 個々の関数・メソッドの動作を検証
+  - 統合テスト: コンポーネント間の連携を検証
+  - 契約テスト: API エンドポイントの仕様を検証
+- **テスト可能性の設計**:
+  - テストしやすいコード設計を心がける
+  - 依存性の注入（DI）を活用してモック可能にする
+  - 副作用を最小限に抑え、純粋関数を優先する
+
 ## 開発ワークフロー
 
 ### コードレビュー
@@ -63,8 +84,9 @@ GitHub Actions上のClaude Codeセッションでは、一貫したブランチ�
 
 ### テスト
 
-- 重要な機能にはテストを書くことを推奨
+- **すべての機能実装にはテストが必須**（原則 V に従う）
 - テストは読みやすく、メンテナンスしやすいものに
+- テストが通過しないコードはマージしない
 
 ## Governance
 
@@ -75,4 +97,4 @@ GitHub Actions上のClaude Codeセッションでは、一貫したブランチ�
   - MINOR: 新しい原則やセクションの追加
   - PATCH: 文言の修正や明確化
 
-**Version**: 1.1.0 | **Ratified**: 2026-01-12 | **Last Amended**: 2026-01-12
+**Version**: 1.2.0 | **Ratified**: 2026-01-12 | **Last Amended**: 2026-01-12
