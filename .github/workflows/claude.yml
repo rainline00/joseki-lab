@@ -47,6 +47,7 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           claude_args: |
+            --model claude-opus-4-5-20251101
             --mcp-config .github/mcp-servers.json
             --allowedTools \
               Bash, Write, Edit, MultiEdit, Read, LS, Glob, Grep, WebFetch\
@@ -63,4 +64,3 @@ jobs:
               mcp__github__create_pending_pull_request_review,\
               mcp__github__add_comment_to_pending_review,\
               mcp__github__submit_pending_pull_request_review
-
