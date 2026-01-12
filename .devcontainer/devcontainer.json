@@ -13,6 +13,13 @@
         "ms-python.python",
         "GitHub.copilot"
       ]
+    },
+    "codespaces": {
+      "permissions": {
+        "actions": "write",
+        "contents": "write",
+        "workflows": "write"
+      }
     }
   }
 }
