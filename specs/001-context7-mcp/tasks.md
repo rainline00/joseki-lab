@@ -24,8 +24,8 @@ This feature is a **configuration-only change**. The only modified file is:
 
 **Purpose**: Prepare the repository for Context7 MCP integration
 
-- [ ] T001 Review existing MCP configuration in .github/mcp-servers.json
-- [ ] T002 Verify JSON syntax is valid and backup current state
+- [x] T001 Review existing MCP configuration in .github/mcp-servers.json
+- [x] T002 Verify JSON syntax is valid and backup current state
 
 ---
 
@@ -35,8 +35,8 @@ This feature is a **configuration-only change**. The only modified file is:
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 Verify mcpServers object structure in .github/mcp-servers.json supports multiple entries
-- [ ] T004 Confirm GitHub Actions runner has Node.js/npx available (ubuntu-latest includes this)
+- [x] T003 Verify mcpServers object structure in .github/mcp-servers.json supports multiple entries
+- [x] T004 Confirm GitHub Actions runner has Node.js/npx available (ubuntu-latest includes this)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -50,9 +50,9 @@ This feature is a **configuration-only change**. The only modified file is:
 
 ### Implementation for User Story 1
 
-- [ ] T005 [US1] Add context7 server entry to mcpServers in .github/mcp-servers.json with command "npx", args ["-y", "@upstash/context7-mcp"], and empty env object
-- [ ] T006 [US1] Validate JSON syntax is correct after modification in .github/mcp-servers.json
-- [ ] T007 [US1] Verify context7 entry coexists with github entry in .github/mcp-servers.json
+- [x] T005 [US1] Add context7 server entry to mcpServers in .github/mcp-servers.json with command "npx", args ["-y", "@upstash/context7-mcp"], and empty env object
+- [x] T006 [US1] Validate JSON syntax is correct after modification in .github/mcp-servers.json
+- [x] T007 [US1] Verify context7 entry coexists with github entry in .github/mcp-servers.json
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -66,8 +66,8 @@ This feature is a **configuration-only change**. The only modified file is:
 
 ### Implementation for User Story 2
 
-- [ ] T008 [US2] (Optional) Add CONTEXT7_API_KEY environment variable reference to context7 entry in .github/mcp-servers.json for enhanced rate limits
-- [ ] T009 [US2] Document API key setup process in repository secrets (Settings -> Secrets -> CONTEXT7_API_KEY)
+- [x] T008 [US2] (Optional) Add CONTEXT7_API_KEY environment variable reference to context7 entry in .github/mcp-servers.json for enhanced rate limits (skipped - works without API key)
+- [x] T009 [US2] Document API key setup process in repository secrets (Settings -> Secrets -> CONTEXT7_API_KEY) - see quickstart.md
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -77,10 +77,10 @@ This feature is a **configuration-only change**. The only modified file is:
 
 **Purpose**: Validation and documentation improvements
 
-- [ ] T010 Manual validation: Trigger Claude Code via GitHub comment with library question
-- [ ] T011 Manual validation: Verify existing GitHub MCP tools still work (list issues, PRs)
-- [ ] T012 Manual validation: Test graceful degradation if Context7 is unavailable
-- [ ] T013 Run quickstart.md validation steps
+- [ ] T010 Manual validation: Trigger Claude Code via GitHub comment with library question (post-merge)
+- [ ] T011 Manual validation: Verify existing GitHub MCP tools still work (list issues, PRs) (post-merge)
+- [ ] T012 Manual validation: Test graceful degradation if Context7 is unavailable (post-merge)
+- [ ] T013 Run quickstart.md validation steps (post-merge)
 
 ---
 
