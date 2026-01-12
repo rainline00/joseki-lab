@@ -1,0 +1,1008 @@
+openapi: 3.0.3
+info:
+  title: Joseki Manager API
+  description: |
+    将棋定跡管理アプリケーションのREST API。
+
+    ## 概要
+    - 定跡ツリーの作成・管理
+    - 局面（ノード）への指し手追加
+    - 戦型ラベルの付与・検索
+    - KIF/KI2形式のインポート・エクスポート
+  version: 1.0.0
+  contact:
+    name: Joseki Lab
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: ローカル開発サーバー
+
+tags:
+  - name: trees
+    description: 定跡ツリー管理
+  - name: nodes
+    description: ノード（局面）操作
+  - name: labels
+    description: ラベル管理
+  - name: import-export
+    description: インポート・エクスポート
+
+paths:
+  # ==================== Trees ====================
+  /trees:
+    get:
+      tags: [trees]
+      summary: 定跡ツリー一覧取得
+      description: アクティブな定跡ツリーの一覧を取得
+      operationId: listTrees
+      parameters:
+        - name: include_deleted
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: ゴミ箱内のツリーも含めるか
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JosekiTreeSummary'
+    post:
+      tags: [trees]
+      summary: 定跡ツリー作成
+      description: 新しい定跡ツリーを作成（初期局面をルートノードとして自動作成）
+      operationId: createTree
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JosekiTreeCreate'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JosekiTree'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /trees/{tree_id}:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    get:
+      tags: [trees]
+      summary: 定跡ツリー詳細取得
+      operationId: getTree
+      parameters:
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: 取得するツリーの深さ
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JosekiTreeDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [trees]
+      summary: 定跡ツリー更新
+      operationId: updateTree
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JosekiTreeUpdate'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JosekiTree'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [trees]
+      summary: 定跡ツリー削除（ゴミ箱へ移動）
+      operationId: deleteTree
+      responses:
+        '204':
+          description: 削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /trees/{tree_id}/restore:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    post:
+      tags: [trees]
+      summary: 定跡ツリー復元
+      description: ゴミ箱から復元
+      operationId: restoreTree
+      responses:
+        '200':
+          description: 復元成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JosekiTree'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: ゴミ箱にないツリー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trees/{tree_id}/permanent:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    delete:
+      tags: [trees]
+      summary: 定跡ツリー完全削除
+      description: ゴミ箱から完全に削除（復元不可）
+      operationId: permanentDeleteTree
+      responses:
+        '204':
+          description: 削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /trees/trash:
+    get:
+      tags: [trees]
+      summary: ゴミ箱内ツリー一覧
+      operationId: listTrash
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JosekiTreeSummary'
+
+  # ==================== Nodes ====================
+  /trees/{tree_id}/nodes:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    get:
+      tags: [nodes]
+      summary: ノード一覧取得
+      operationId: listNodes
+      parameters:
+        - name: sfen
+          in: query
+          schema:
+            type: string
+          description: SFEN文字列で絞り込み
+        - name: label_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ラベルIDで絞り込み
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Node'
+
+  /trees/{tree_id}/nodes/{node_id}:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+      - $ref: '#/components/parameters/NodeId'
+    get:
+      tags: [nodes]
+      summary: ノード詳細取得
+      operationId: getNode
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NodeDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [nodes]
+      summary: ノード更新
+      description: コメント、評価値、メタデータの更新
+      operationId: updateNode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeUpdate'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [nodes]
+      summary: ノード削除
+      description: ノードとその子孫を削除
+      operationId: deleteNode
+      responses:
+        '204':
+          description: 削除成功
+        '400':
+          description: ルートノードは削除不可
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /trees/{tree_id}/nodes/{node_id}/moves:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+      - $ref: '#/components/parameters/NodeId'
+    post:
+      tags: [nodes]
+      summary: 指し手追加
+      description: |
+        指定ノードから指し手を追加。
+        - 合法手のみ受け付け（二歩・打ち歩詰めは自動拒否）
+        - 既存局面への転置は自動検出してリンク
+      operationId: addMove
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveCreate'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveResult'
+        '400':
+          description: 不正な指し手
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoveError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 既に同じ指し手が存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trees/{tree_id}/nodes/{node_id}/children:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+      - $ref: '#/components/parameters/NodeId'
+    get:
+      tags: [nodes]
+      summary: 子ノード一覧取得
+      operationId: getChildren
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChildNode'
+
+  # ==================== Labels ====================
+  /labels:
+    get:
+      tags: [labels]
+      summary: ラベル一覧取得
+      operationId: listLabels
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+    post:
+      tags: [labels]
+      summary: ラベル作成
+      operationId: createLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelCreate'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: 同名ラベルが既に存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /labels/{label_id}:
+    parameters:
+      - $ref: '#/components/parameters/LabelId'
+    get:
+      tags: [labels]
+      summary: ラベル詳細取得
+      operationId: getLabel
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [labels]
+      summary: ラベル更新
+      operationId: updateLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelUpdate'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [labels]
+      summary: ラベル削除
+      operationId: deleteLabel
+      responses:
+        '204':
+          description: 削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /trees/{tree_id}/nodes/{node_id}/labels:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+      - $ref: '#/components/parameters/NodeId'
+    get:
+      tags: [labels]
+      summary: ノードのラベル一覧
+      operationId: getNodeLabels
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+    post:
+      tags: [labels]
+      summary: ノードにラベル追加
+      operationId: addNodeLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label_id]
+              properties:
+                label_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: 追加成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: 既に追加済み
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trees/{tree_id}/nodes/{node_id}/labels/{label_id}:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+      - $ref: '#/components/parameters/NodeId'
+      - $ref: '#/components/parameters/LabelId'
+    delete:
+      tags: [labels]
+      summary: ノードからラベル削除
+      operationId: removeNodeLabel
+      responses:
+        '204':
+          description: 削除成功
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Search ====================
+  /search/nodes:
+    get:
+      tags: [nodes]
+      summary: ノード検索
+      operationId: searchNodes
+      parameters:
+        - name: label_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ラベルIDで検索
+        - name: sfen
+          in: query
+          schema:
+            type: string
+          description: SFEN文字列で検索
+        - name: tree_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ツリーIDで絞り込み
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NodeSearchResult'
+
+  # ==================== Import/Export ====================
+  /trees/{tree_id}/import:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    post:
+      tags: [import-export]
+      summary: 棋譜インポート
+      description: KIF/KI2形式の棋譜ファイルをインポート
+      operationId: importKifu
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: KIF/KI2ファイル
+                merge_mode:
+                  type: string
+                  enum: [append, skip_existing]
+                  default: append
+                  description: |
+                    - append: 既存ノードにマージ
+                    - skip_existing: 既存局面はスキップ
+      responses:
+        '200':
+          description: インポート成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportResult'
+        '400':
+          description: パースエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trees/{tree_id}/export:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    get:
+      tags: [import-export]
+      summary: 定跡エクスポート
+      operationId: exportTree
+      parameters:
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [json, kif]
+          description: 出力形式
+        - name: node_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: 指定ノード以下のみエクスポート（省略時はツリー全体）
+      responses:
+        '200':
+          description: エクスポート成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JosekiTreeExport'
+            text/plain:
+              schema:
+                type: string
+                description: KIF形式テキスト
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Merge ====================
+  /trees/{tree_id}/merge:
+    parameters:
+      - $ref: '#/components/parameters/TreeId'
+    post:
+      tags: [trees]
+      summary: ツリーマージ
+      description: |
+        別のツリーの手順を現在のツリーにマージ。
+        同一局面を基点としてマージを実行。
+      operationId: mergeTree
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_tree_id, base_sfen]
+              properties:
+                source_tree_id:
+                  type: string
+                  format: uuid
+                  description: マージ元ツリーID
+                base_sfen:
+                  type: string
+                  description: マージ基点となる局面のSFEN
+                conflict_resolution:
+                  type: string
+                  enum: [keep_target, keep_source, ask]
+                  default: ask
+                  description: |
+                    コンフリクト時の解決方法
+                    - keep_target: 現在のツリーを優先
+                    - keep_source: マージ元を優先
+                    - ask: コンフリクトリストを返す
+      responses:
+        '200':
+          description: マージ成功（またはコンフリクトリスト）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MergeResult'
+        '400':
+          description: 基点局面が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  parameters:
+    TreeId:
+      name: tree_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: 定跡ツリーID
+    NodeId:
+      name: node_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ノードID
+    LabelId:
+      name: label_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ラベルID
+
+  responses:
+    BadRequest:
+      description: リクエスト不正
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: リソースが見つからない
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # ==================== Tree Schemas ====================
+    JosekiTreeSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        node_count:
+          type: integer
+          description: ノード数
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        is_deleted:
+          type: boolean
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    JosekiTree:
+      allOf:
+        - $ref: '#/components/schemas/JosekiTreeSummary'
+        - type: object
+          properties:
+            root_node:
+              $ref: '#/components/schemas/Node'
+
+    JosekiTreeDetail:
+      allOf:
+        - $ref: '#/components/schemas/JosekiTree'
+        - type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/NodeWithChildren'
+
+    JosekiTreeCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+
+    JosekiTreeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+
+    # ==================== Node Schemas ====================
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tree_id:
+          type: string
+          format: uuid
+        sfen:
+          type: string
+          description: 局面（SFEN形式）
+        comment:
+          type: string
+        evaluation:
+          type: integer
+          nullable: true
+          description: 局面評価値（centipawn）
+        metadata:
+          type: object
+          additionalProperties: true
+          description: 拡張メタデータ
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        is_root:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    NodeDetail:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            parents:
+              type: array
+              items:
+                $ref: '#/components/schemas/ParentEdge'
+              description: 親ノードへのエッジ（転置の場合複数）
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChildNode'
+
+    NodeWithChildren:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                $ref: '#/components/schemas/ChildNode'
+
+    NodeUpdate:
+      type: object
+      properties:
+        comment:
+          type: string
+        evaluation:
+          type: integer
+          nullable: true
+          minimum: -99999
+          maximum: 99999
+        metadata:
+          type: object
+          additionalProperties: true
+
+    NodeSearchResult:
+      allOf:
+        - $ref: '#/components/schemas/Node'
+        - type: object
+          properties:
+            tree_name:
+              type: string
+
+    ChildNode:
+      type: object
+      properties:
+        node:
+          $ref: '#/components/schemas/Node'
+        move_usi:
+          type: string
+          description: USI形式の指し手
+        move_japanese:
+          type: string
+          description: 日本語表記
+
+    ParentEdge:
+      type: object
+      properties:
+        parent_id:
+          type: string
+          format: uuid
+        parent_sfen:
+          type: string
+        move_usi:
+          type: string
+        move_japanese:
+          type: string
+
+    # ==================== Move Schemas ====================
+    MoveCreate:
+      type: object
+      required: [move_usi]
+      properties:
+        move_usi:
+          type: string
+          description: USI形式の指し手（例：7g7f）
+          pattern: '^[1-9][a-i][1-9][a-i](\+)?$|^[PLNSGBR]\*[1-9][a-i]$'
+
+    MoveResult:
+      type: object
+      properties:
+        edge:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            move_usi:
+              type: string
+            move_japanese:
+              type: string
+        child_node:
+          $ref: '#/components/schemas/Node'
+        is_transposition:
+          type: boolean
+          description: 転置（既存局面へのリンク）かどうか
+
+    MoveError:
+      type: object
+      properties:
+        error:
+          type: string
+          enum: [illegal_move, nifu, uchifuzume, invalid_format]
+        message:
+          type: string
+        move_usi:
+          type: string
+
+    # ==================== Label Schemas ====================
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          nullable: true
+        description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    LabelCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        description:
+          type: string
+
+    LabelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        description:
+          type: string
+
+    # ==================== Import/Export Schemas ====================
+    ImportResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        nodes_created:
+          type: integer
+        nodes_updated:
+          type: integer
+        nodes_skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              move_number:
+                type: integer
+              error:
+                type: string
+
+    JosekiTreeExport:
+      type: object
+      properties:
+        tree:
+          $ref: '#/components/schemas/JosekiTreeSummary'
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeWithChildren'
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        exported_at:
+          type: string
+          format: date-time
+
+    # ==================== Merge Schemas ====================
+    MergeResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        nodes_merged:
+          type: integer
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              sfen:
+                type: string
+              target_move:
+                type: string
+              source_move:
+                type: string
+              conflict_type:
+                type: string
+                enum: [different_move, different_comment]
+
+    # ==================== Error Schema ====================
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true

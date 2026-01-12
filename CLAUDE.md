@@ -45,3 +45,10 @@ Joseki Lab は、Claude Code と speckit ワークフローを使用した開発
 - `/speckit.implement` - 実装の実行
 
 詳細は `.claude/commands/` ディレクトリ内のファイルを参照してください。
+
+## Active Technologies
+- Python 3.11+ + Django 5.0+, Django REST Framework 3.14+, cshogi 0.8+ (002-joseki-manager)
+- PostgreSQL 15+ (002-joseki-manager)
+
+## Recent Changes
+- 002-joseki-manager: Added Python 3.11+ + Django 5.0+, Django REST Framework 3.14+, cshogi 0.8+
