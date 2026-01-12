@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/rainline00/joseki-lab/context7-tools-schema",
+  "title": "Context7 MCP Tools",
+  "description": "Schema definitions for Context7 MCP server tools",
+  "definitions": {
+    "ResolveLibraryIdInput": {
+      "type": "object",
+      "title": "resolve-library-id Input",
+      "description": "Input schema for the resolve-library-id tool",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "Search term for the library (e.g., 'Next.js', 'React')",
+          "minLength": 1,
+          "examples": ["Next.js", "React", "Vue", "MongoDB"]
+        },
+        "libraryName": {
+          "type": "string",
+          "description": "Optional specific library name for exact matching"
+        }
+      },
+      "required": ["query"]
+    },
+    "ResolveLibraryIdOutput": {
+      "type": "object",
+      "title": "resolve-library-id Output",
+      "description": "Output schema for the resolve-library-id tool",
+      "properties": {
+        "libraryId": {
+          "type": "string",
+          "description": "Context7-compatible library identifier",
+          "pattern": "^/[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+$",
+          "examples": ["/vercel/next.js", "/mongodb/docs", "/vuejs/vue"]
+        }
+      },
+      "required": ["libraryId"]
+    },
+    "QueryDocsInput": {
+      "type": "object",
+      "title": "query-docs Input",
+      "description": "Input schema for the query-docs (get-library-docs) tool",
+      "properties": {
+        "libraryId": {
+          "type": "string",
+          "description": "Context7-compatible library ID from resolve-library-id",
+          "pattern": "^/[a-zA-Z0-9_-]+/[a-zA-Z0-9_.-]+$",
+          "examples": ["/vercel/next.js", "/mongodb/docs"]
+        },
+        "query": {
+          "type": "string",
+          "description": "Search query for documentation content",
+          "minLength": 1,
+          "examples": ["App Router", "Server Components", "useEffect hook"]
+        }
+      },
+      "required": ["libraryId", "query"]
+    },
+    "QueryDocsOutput": {
+      "type": "object",
+      "title": "query-docs Output",
+      "description": "Output schema for the query-docs tool",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Relevant documentation content"
+        },
+        "source": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL of the source documentation page"
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Section title"
+              },
+              "content": {
+                "type": "string",
+                "description": "Section content"
+              }
+            }
+          },
+          "description": "Documentation broken into sections"
+        }
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "resolve-library-id",
+      "description": "Resolves a general library name into a Context7-compatible library ID",
+      "inputSchema": { "$ref": "#/definitions/ResolveLibraryIdInput" },
+      "outputSchema": { "$ref": "#/definitions/ResolveLibraryIdOutput" }
+    },
+    {
+      "name": "query-docs",
+      "description": "Retrieves documentation for a library using a Context7-compatible library ID",
+      "inputSchema": { "$ref": "#/definitions/QueryDocsInput" },
+      "outputSchema": { "$ref": "#/definitions/QueryDocsOutput" }
+    }
+  ]
+}

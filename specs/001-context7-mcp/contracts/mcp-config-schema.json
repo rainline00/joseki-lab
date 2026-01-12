@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/rainline00/joseki-lab/mcp-servers-schema",
+  "title": "MCP Servers Configuration",
+  "description": "Schema for .github/mcp-servers.json defining MCP servers for Claude Code",
+  "type": "object",
+  "properties": {
+    "mcpServers": {
+      "type": "object",
+      "description": "Container for all MCP server definitions",
+      "additionalProperties": {
+        "$ref": "#/definitions/MCPServerEntry"
+      }
+    }
+  },
+  "required": ["mcpServers"],
+  "definitions": {
+    "MCPServerEntry": {
+      "type": "object",
+      "description": "Individual MCP server configuration",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Executable command to run the MCP server",
+          "examples": ["docker", "npx", "node"]
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Command-line arguments for the server",
+          "examples": [
+            ["-y", "@upstash/context7-mcp"],
+            ["run", "-i", "--rm", "ghcr.io/github/github-mcp-server"]
+          ]
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Environment variables to pass to the server",
+          "examples": [
+            { "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}" },
+            { "GITHUB_PERSONAL_ACCESS_TOKEN": "${GH_TOKEN}" }
+          ]
+        }
+      },
+      "required": ["command", "args"]
+    },
+    "Context7ServerEntry": {
+      "type": "object",
+      "description": "Context7 MCP server specific configuration",
+      "properties": {
+        "command": {
+          "const": "npx",
+          "description": "Must be npx for Context7"
+        },
+        "args": {
+          "type": "array",
+          "items": [
+            { "const": "-y" },
+            { "const": "@upstash/context7-mcp" }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "env": {
+          "type": "object",
+          "properties": {
+            "CONTEXT7_API_KEY": {
+              "type": "string",
+              "description": "Optional API key for higher rate limits"
+            }
+          }
+        }
+      },
+      "required": ["command", "args"]
+    }
+  },
+  "examples": [
+    {
+      "mcpServers": {
+        "github": {
+          "command": "docker",
+          "args": [
+            "run",
+            "-i",
+            "--rm",
+            "-e",
+            "GITHUB_PERSONAL_ACCESS_TOKEN",
+            "ghcr.io/github/github-mcp-server"
+          ],
+          "env": {
+            "GITHUB_PERSONAL_ACCESS_TOKEN": "${GH_TOKEN}"
+          }
+        },
+        "context7": {
+          "command": "npx",
+          "args": ["-y", "@upstash/context7-mcp"],
+          "env": {}
+        }
+      }
+    }
+  ]
+}

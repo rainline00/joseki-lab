@@ -1,10 +1,11 @@
 <!--
 Sync Impact Report:
-- Version change: N/A → 1.0.0
+- Version change: 1.0.0 → 1.1.0
 - Added principles:
   - I. 日本語ドキュメンテーション (Japanese Documentation)
   - II. シンプルさ優先 (Simplicity First)
   - III. 明確なコミュニケーション (Clear Communication)
+  - IV. ブランチ運用ポリシー (Branch Management Policy) [NEW]
 - Templates requiring updates: ✅ Reviewed (no updates needed for initial constitution)
 -->
 
@@ -37,6 +38,22 @@ Sync Impact Report:
 - 必要に応じて適切なコメントを追加する
 - エラーメッセージは具体的で対処方法がわかるものにする
 
+### IV. ブランチ運用ポリシー
+
+GitHub Actions上のClaude Codeセッションでは、一貫したブランチ管理を行う。
+
+- **Feature ブランチ命名規則**: `NNN-short-name` 形式（例: `001-context7-mcp`）
+  - NNN: 3桁のゼロパディングされた番号
+  - short-name: 機能を簡潔に表すケバブケース
+- **1 Issue = 1 Branch の原則**:
+  - 1つのIssue（またはPR）に対して1つのfeatureブランチを使用
+  - 作業中に他のブランチを作成した場合は、タスク完了時にfeatureブランチにマージして統合
+  - 不要になった中間ブランチは削除して整理
+- **ブランチのライフサイクル**:
+  - Issue作成時にfeatureブランチを作成
+  - 実装完了後、PRを通じてメインブランチにマージ
+  - マージ完了後、featureブランチを削除
+
 ## 開発ワークフロー
 
 ### コードレビュー
@@ -58,4 +75,4 @@ Sync Impact Report:
   - MINOR: 新しい原則やセクションの追加
   - PATCH: 文言の修正や明確化
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-12 | **Last Amended**: 2026-01-12
+**Version**: 1.1.0 | **Ratified**: 2026-01-12 | **Last Amended**: 2026-01-12
