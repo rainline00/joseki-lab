@@ -46,6 +46,7 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
-          claude_args: '--model claude-opus-4-5-20251101'
-
+          claude_args: |
+            --model claude-opus-4-5-20251101
+            --mcp-config .github/mcp-servers.json
+            --allowedTools "Bash,Write,Edit,MultiEdit,Read,LS,Glob,Grep,WebFetch,mcp__github__create_branch,mcp__github__issue_read,mcp__github__issue_write,mcp__github__sub_issue_write,mcp__github__list_sub_issues,mcp__github__create_pull_request,mcp__github__get_pull_request,mcp__github__get_pull_request_diff,mcp__github__pull_request_read,mcp__github__update_pull_request,mcp__github__create_pending_pull_request_review,mcp__github__add_comment_to_pending_review,mcp__github__submit_pending_pull_request_review"
