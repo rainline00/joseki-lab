@@ -88,6 +88,45 @@
 - Edge で parent_id と child_id が同じ値の場合は？→ CheckConstraint で禁止（自己参照禁止）
 - Label の color が無効な HEX 形式の場合は？→ RegexValidator でバリデーションエラー
 
+## Clarification Decisions
+
+明確化プロセスで決定した事項を記録します。
+
+### CD-001: テスト用データベース戦略
+
+**決定**: PostgreSQL（本番同等・Docker 使用）
+
+**理由**: 本番環境との一貫性を保ち、JSONB・CHECK 制約など PostgreSQL 固有機能のテストが可能になるため。
+
+### CD-002: cshogi エラーハンドリング戦略
+
+**決定**: カスタム例外をラップして raise（SfenParseError, InvalidMoveError など）
+
+**理由**: cshogi のエラーを Python 例外にラップすることで、呼び出し元で柔軟に処理でき、デバッグも容易になるため。
+
+### CD-003: SFEN 形式と手数管理
+
+**決定**:
+- **SFEN フィールド**: 手数なし形式で保存（局面の一意識別用）
+- **Node モデル**: `ply` フィールドを追加して手数を別途管理
+
+**検証結果**:
+```
+=== cshogi SFEN 検証 ===
+手数なしSFEN: lnsgkgsnl/...b -
+  読み取り: 成功
+  手数: 0（内部的に 0 として扱われる）
+  出力SFEN: lnsgkgsnl/...b - 0
+```
+
+**理由**:
+- cshogi は手数なし SFEN を正常に読み取れる（内部では move_number = 0）
+- 局面の一意識別には手数は不要（同一局面は同一ノード）
+- 手数情報は定跡学習や棋譜表示で必要なため、`ply` フィールドで別途管理
+- data-model.md の定義を拡張し、Node に `ply: INTEGER, NULLABLE, DEFAULT 0` を追加
+
+---
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
@@ -95,7 +134,7 @@
 - **FR-001**: System MUST trees, labels, exports, core の4つの Django アプリケーションを作成する
 - **FR-002**: System MUST src/core/shogi/ に position.py と rules.py を作成する
 - **FR-003**: System MUST JosekiTree モデルを data-model.md の定義に従って実装する
-- **FR-004**: System MUST Node モデルを data-model.md の定義に従って実装する（tree_id, sfen の複合ユニーク制約を含む）
+- **FR-004**: System MUST Node モデルを data-model.md の定義に従って実装する（tree_id, sfen の複合ユニーク制約、ply フィールドを含む）
 - **FR-005**: System MUST Edge モデルを data-model.md の定義に従って実装する（parent_id, move_usi の複合ユニーク制約、自己参照禁止制約を含む）
 - **FR-006**: System MUST Label モデルを data-model.md の定義に従って実装する（name のユニーク制約を含む）
 - **FR-007**: System MUST NodeLabel モデルを data-model.md の定義に従って実装する（node_id, label_id の複合ユニーク制約を含む）
@@ -110,7 +149,7 @@
 このフェーズで実装するエンティティ（詳細は data-model.md 参照）:
 
 - **JosekiTree（定跡ツリー）**: ルートエンティティ。name, description, is_deleted, deleted_at を持つ
-- **Node（ノード）**: 各局面を表す。tree_id, sfen, comment, evaluation, metadata を持つ
+- **Node（ノード）**: 各局面を表す。tree_id, sfen, ply, comment, evaluation, metadata を持つ
 - **Edge（エッジ）**: 親子ノード間の指し手。parent_id, child_id, move_usi, move_japanese を持つ
 - **Label（ラベル）**: 戦型タグ。name, color, description を持つ
 - **NodeLabel（ノード-ラベル関連）**: 多対多の中間テーブル
