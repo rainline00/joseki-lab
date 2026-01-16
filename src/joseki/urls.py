@@ -14,8 +14,8 @@ from drf_spectacular.views import (
 
 # API v1 URL patterns
 api_v1_patterns = [
+    path("trees/", include("trees.urls")),
     # TODO: Add app URLs in future phases
-    # path("trees/", include("trees.urls")),
     # path("labels/", include("labels.urls")),
     # path("exports/", include("exports.urls")),
 ]
